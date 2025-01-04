@@ -1,0 +1,19 @@
+/* Input styling */
+.key {
+    box-sizing: border-box;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    font-family: 'Host Grotesk', sans-serif;
+    border-radius: 8px;
+    width: 260px;
+    height: 48px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Input focus effect */
+.key:focus {
+    border-color: #FF847C;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
