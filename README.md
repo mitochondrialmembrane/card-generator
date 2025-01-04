@@ -1,6 +1,6 @@
 # Quizbowl Anki Card Generator
 
-A web app to generate and edit quizbowl flashcards in Anki format, making it easy to convert questions from the QBReader database into structured study materials. Users can generate cloze-style flashcards from text and export them as .apkg files for Anki.
+A web app to generate and edit quizbowl flashcards in Anki format, making it easy to convert questions from the [QBReader]([url](https://www.qbreader.org/database/)) database into structured study materials. Users can generate cloze-style flashcards from text and export them as .apkg files for Anki.
 
 ## Usage
 1. Enter OpenAI API Key: Paste your API key into the input field to enable flashcard generation.
