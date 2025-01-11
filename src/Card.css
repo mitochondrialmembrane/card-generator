@@ -1,71 +1,26 @@
-.card {
-    position: relative;
-    width: max-content;
-    margin-inline: auto;
-}
-
 .card-input {
-    box-sizing: border-box;
     padding: 12px 20px;
     font-size: 16px;
-    border: 2px solid #ccc;
-    font-family: 'Host Grotesk', sans-serif;
+    border: 1px solid #2a363b;
+    font-family: 'Roboto', sans-serif;
     border-radius: 8px;
-    min-height: 100px;
-    width: 320px;
+    height: 100%;
+    width: 100%;
     outline: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     margin: 8px;
+    resize: none;
+    background-color: #2a363b;
+    color: #fff;
+    overflow: auto;
+}
+
+.card-input:hover {
+    border-color: #fff;
 }
 
 .card-input:focus {
-    border-color: #FF847C;
+    padding: 11px 19px;
+    border: 2px solid #e84a5F;
     box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
-}
-
-.button-row {
-    position: absolute;
-    top: 0;
-    left: calc(100% + 8px);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: left;
-    justify-content: flex-start;
-    padding: 10px;
-}
-
-.delete {
-    padding: 6px 10px;
-    font-size: 10px;
-    font-family: 'Host Grotesk', sans-serif;
-    background-color: #E84A5F;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    width: max-content;
-}
-
-.cloze {
-    padding: 6px 10px;
-    font-size: 10px;
-    font-family: 'Host Grotesk', sans-serif;
-    background-color: #FECEAB;
-    color: black;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    width: max-content;
-}
-
-.delete:hover {
-    background-color: #FF847C;
-}
-
-.cloze:hover {
-    background-color: white;
 }

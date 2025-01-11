@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { QueryParams, queryDatabase } from './api/qbReaderApi';
 import { getOpenAIResponse } from './api/openaiApi';
-import './Generator.css';
 import * as Constants from './constants';
 import { Card } from './Card';
 import { KeyInput } from "./keyInput";
+import { TextField, Button, Box, OutlinedInput, InputLabel, MenuItem, FormControl, ListItemText, Checkbox, Container, Typography, Chip, Stack, ButtonGroup } from '@mui/material';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import { Delete, LibraryAdd, FileDownload } from '@mui/icons-material';
+import { red } from '@mui/material/colors';
 
 interface Tossup {
   question: string;
@@ -27,20 +30,27 @@ interface CardContent {
   content: string;
 }
 
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: Constants.ITEM_HEIGHT * 4.5 + Constants.ITEM_PADDING_TOP,
+      width: 200,
+    },
+  },
+};
+
 
 export const Generator: React.FC = () => {
   const [queryString, setQueryString] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
-  const [selectedAlternateSubcategories, setSelectedAlternateSubcategories] = useState<string[]>([]);
-  const [isCategoryDropdownVisible, setIsCategoryDropdownVisible] = useState(false);
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
-  const [isDifficultyDropdownVisible, setIsDifficultyDropdownVisible] = useState(false);
   const [cards, setCards] = useState<CardContent[]>([]);
   const [highestID, setHighestID] = useState<number>(0);
-  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState<string>("");
+  const [generateClicked, setGenerateClicked] = useState(false);
+  const [numGenerated, setNumGenerated] = useState<number | null>(null);
 
   const handleApiKeySave = (key: string) => {
     setApiKey(key);
@@ -54,17 +64,7 @@ export const Generator: React.FC = () => {
     setCards(updatedCards); // Update the state with the modified card
   };
 
-  // toggles if the category dropdown menu is visible
-  const toggleCategoryDropdown = () => {
-    setIsCategoryDropdownVisible((prev) => !prev);
-  };
-
-  // toggles if the difficulty dropdown menu is visible
-  const toggleDifficultyDropdown = () => {
-    setIsDifficultyDropdownVisible((prev) => !prev);
-  };
-
-  const handleCategoryCheckboxChange = (category: string) => {
+  const handleCategoryChange = (category: string) => {
     setSelectedCategories((prevSelected) =>
       prevSelected.includes(category)
         ? prevSelected.filter((item) => item !== category)
@@ -72,29 +72,25 @@ export const Generator: React.FC = () => {
     );
   };
 
-  const handleSubcategoryCheckboxChange = (category: string) => {
-    setSelectedSubcategories((prevSelected) =>
-      prevSelected.includes(category)
-        ? prevSelected.filter((item) => item !== category)
-        : [...prevSelected, category]
+  const handleDifficultyCheckboxChange = (e: SelectChangeEvent<typeof selectedDifficulties>) => {
+    const {
+      target: { value },
+    } = e;
+    setSelectedDifficulties(
+      // On autofill we get a stringified value.
+      typeof value === 'string' ? value.split(',') : value,
     );
   };
 
-  const handleAlternateSubcategoryCheckboxChange = (category: string) => {
-    setSelectedAlternateSubcategories((prevSelected) =>
-      prevSelected.includes(category)
-        ? prevSelected.filter((item) => item !== category)
-        : [...prevSelected, category]
-    );
-  };
-
-  const handleDifficultyCheckboxChange = (difficulty: string) => {
-    setSelectedDifficulties((prevSelected) =>
-      prevSelected.includes(difficulty)
-        ? prevSelected.filter((item) => item !== difficulty)
-        : [...prevSelected, difficulty]
-    );
-  };
+  const addCard = () => {
+    const updatedCards = [...cards];
+    updatedCards.unshift({
+      id: highestID,
+      content: ""
+    });
+    setHighestID(highestID + 1);
+    setCards(updatedCards);
+  }
 
   const handleSubmit = async (e: React.FormEvent<EventTarget>) => {
     e.preventDefault();
@@ -129,9 +125,6 @@ export const Generator: React.FC = () => {
         { role: 'system', content: Constants.SYSTEM_PROMPT },
         { role: 'user', content: `The query is ${queryString} and the questions are: ${JSON.stringify(results, null, 2)}` }
       ];
-      if (apiKey == null) {
-        throw new Error("Please enter your API key.");
-      }
       const openaiResponse = await getOpenAIResponse(messages, apiKey);
       const initialStrings = openaiResponse.split('\n').filter((str: string) => str.includes("{{c"));
       const initialCards = initialStrings.map(((card: string, index: number) => ({
@@ -140,6 +133,8 @@ export const Generator: React.FC = () => {
       })));
       setHighestID(highestID + initialStrings.length);
       setCards(initialCards.concat(cards));
+      setGenerateClicked(true);
+      setNumGenerated(initialStrings.length);
 
     } catch (err: any) {
       setError(err.message);
@@ -179,162 +174,114 @@ export const Generator: React.FC = () => {
     document.body.removeChild(link);
   }
 
-  const filteredSubcategories = selectedCategories.flatMap((category) => Constants.SUBCATEGORIES[category] || []);
-  const filteredAlternateSubcategories = selectedSubcategories.flatMap((subcategory) => Constants.ALTERNATE_SUBCATEGORIES[subcategory] || []);
-
   return (
-    <div>
-      <h1>Anki Card Generator</h1>
+    <Container maxWidth="md">
+      <KeyInput onSave={handleApiKeySave} />
+
+      {!generateClicked && <Box sx={{
+        marginTop: '100px'
+      }}>
+        <Typography variant="h4">
+          Welcome!
+        </Typography>
+        <Typography variant="subtitle1">
+          Enter a query to get started.
+        </Typography>
+      </Box>}
 
       <form onSubmit={handleSubmit}>
-        <div className="row-container">
-          {/* Input for Database Query */}
-          <input
-            type="text"
-            placeholder="Enter query string for the database"
-            value={queryString}
-            onChange={(e) => setQueryString(e.target.value)}
-            className="query"
-          />
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="submit"
+        <Stack direction="column" spacing={2}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}
           >
-            {loading ? 'Processing...' : 'Submit'}
-          </button>
-        </div>
+            {/* Input for Difficulty Query */}
+            <FormControl sx={{ maxWidth: 240, width: '100%' }}>
+              <InputLabel id="difficulty-label">Difficulties</InputLabel>
+              <Select
+                labelId="difficulty-label"
+                id="difficulty"
+                multiple
+                value={selectedDifficulties}
+                onChange={handleDifficultyCheckboxChange}
+                input={<OutlinedInput label="Difficulties" />}
+                renderValue={(selectedDifficulties) => selectedDifficulties.join(', ')}
+                MenuProps={MenuProps}
+              >
+                {Constants.DIFFICULTIES.map((difficulty) => (
+                  <MenuItem key={difficulty[0]} value={difficulty[0]} sx={{ padding: '6px' }}>
+                    <Checkbox
+                      checked={selectedDifficulties.includes(difficulty[0])}
+                    />
+                    <ListItemText primary={difficulty[1]} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Input for Database Query */}
+            <TextField
+              id="outlined-basic"
+              label="Query"
+              variant="outlined"
+              value={queryString}
+              sx={{ maxWidth: 350, width: '100%' }}
+              onChange={(e) => setQueryString(e.target.value)}
+            />
+
+            {/* Submit Button */}
+            <Button
+              variant="contained"
+              type="submit"
+              disabled={loading || queryString === ""}
+              size="large"
+            >
+              {loading ? 'Processing...' : 'Generate'}
+            </Button>
+          </Stack>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            {Constants.CATEGORIES.map((category) => (
+              <Chip label={category} variant={selectedCategories.includes(category) ? "filled" : "outlined"} onClick={() => handleCategoryChange(category)} />
+            ))}
+          </Stack>
+        </Stack>
       </form>
 
-      <div className="row-container">
-
-        {/* Difficulty dropdown */}
-        <div className="category-dropdown-container">
-          <button
-            type="button"
-            onClick={toggleDifficultyDropdown}
-            className={`button ${isDifficultyDropdownVisible ? 'active' : ''}`}
-          >
-            Difficulties
-          </button>
-
-          {isDifficultyDropdownVisible && (
-            <div className="dropdown dropwrapper">
-              {Constants.DIFFICULTIES.map((difficulty) => (
-                <label
-                  key={difficulty[0]}
-                >
-                  <input
-                    type="checkbox"
-                    value={difficulty[0]}
-                    checked={selectedDifficulties.includes(difficulty[0])}
-                    onChange={() => handleDifficultyCheckboxChange(difficulty[0])}
-                    className="checkbox"
-                  />
-                  {difficulty[1]}
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Category dropdown */}
-        <div className="category-dropdown-container">
-          <button
-            type="button"
-            onClick={toggleCategoryDropdown}
-            className={`${isCategoryDropdownVisible ? 'active' : ''}`}
-          >
-            Categories
-          </button>
-          <div className="dropwrapper categories">
-            {isCategoryDropdownVisible && (
-              <div className="dropdown">
-                {Constants.CATEGORIES.map((category) => (
-                  <label
-                    key={category}
-                  >
-                    <input
-                      type="checkbox"
-                      value={category}
-                      checked={selectedCategories.includes(category)}
-                      onChange={() => handleCategoryCheckboxChange(category)}
-                      className="checkbox"
-                    />
-                    {category}
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {isCategoryDropdownVisible && filteredSubcategories.length > 0 && (
-              <div className="dropdown">
-                {filteredSubcategories.map((category) => (
-                  <label
-                    key={category}
-                  >
-                    <input
-                      type="checkbox"
-                      value={category}
-                      checked={selectedSubcategories.includes(category)}
-                      onChange={() => handleSubcategoryCheckboxChange(category)}
-                      className="checkbox"
-                    />
-                    {category}
-                  </label>
-                ))}
-              </div>
-            )}
-
-            {isCategoryDropdownVisible && filteredAlternateSubcategories.length > 0 && (
-              <div className="dropdown">
-                {filteredAlternateSubcategories.map((category) => (
-                  <label
-                    key={category}
-                  >
-                    <input
-                      type="checkbox"
-                      value={category}
-                      checked={selectedAlternateSubcategories.includes(category)}
-                      onChange={() => handleAlternateSubcategoryCheckboxChange(category)}
-                      className="checkbox"
-                    />
-                    {category}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <KeyInput onSave={handleApiKeySave} />
-      </div>
-
       {/* Display Error or Response */}
-      {error && <p style={{ color: 'red', marginTop: '20px' }}>Error: {error}</p>}
-      {cards.length > 0 && (
-        <div style={{ marginTop: '20px' }}>
-          <h2>Generated Cards</h2>
-          <div className="cards-editor">
-            <div className="row-container">
-              {/* Export Button */}
-              <button
-                type="button"
-                className="submit"
-                onClick={exportAll}
-              >
-                Export All
-              </button>
-
-              {/* Delete Button */}
-              <button
-                type="button"
-                onClick={handleDeleteAll}
-              >
-                Delete All
-              </button>
-            </div>
+      {error && <Typography variant="subtitle1" sx={{ color: red[500], marginTop: '20px' }}>Error: {error}</Typography>}
+      {generateClicked && (
+        <Box
+          sx={{
+            borderRadius: 3,
+            bgcolor: 'action.selected',
+            marginTop: '20px',
+            width: '100%'
+          }}
+          flexWrap="wrap"
+        >
+          <Box sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexDirection: "row",
+            padding: 2
+          }}>
+            <Box>
+              {numGenerated != null && <Typography variant="subtitle2">{numGenerated.toString()} Cards Generated</Typography>}
+            </Box>
+            {/* Button panel */}
+            <ButtonGroup variant="outlined" aria-label="button group">
+              <Button onClick={addCard} startIcon={<LibraryAdd />}>Add</Button>
+              <Button onClick={handleDeleteAll} startIcon={<Delete />}>Clear</Button>
+              <Button onClick={exportAll} startIcon={<FileDownload />}>Export</Button>
+            </ButtonGroup>
+          </Box>
+          <Box
+            sx={{
+              columns: "2"
+            }}
+            flexWrap="wrap"
+          >
             {cards.map((cardContent, index) => (
               <Card
                 key={cardContent.id}
@@ -343,9 +290,9 @@ export const Generator: React.FC = () => {
                 onDelete={() => handleDelete(index)}
               />
             ))}
-          </div>
-        </div>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Container>
   );
 };

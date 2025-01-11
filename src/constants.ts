@@ -1,3 +1,6 @@
+export const ITEM_HEIGHT = 48;
+export const ITEM_PADDING_TOP = 8;
+
 export const CATEGORIES = [
     'Literature', 
     'History',
@@ -76,10 +79,10 @@ export const DIFFICULTIES = [
     ['3', '3: Regular High School'],
     ['4', '4: Hard High School'],
     ['5', '5: National High School'],
-    ['6', '6: ● / Easy College'],
-    ['7', '7: ●● / Medium College'],
-    ['8', '8: ●●● / Regionals College'],
-    ['9', '9: ●●●● / Nationals College'],
+    ['6', '6: Easy College'],
+    ['7', '7: Medium College'],
+    ['8', '8: Regionals College'],
+    ['9', '9: Nationals College'],
     ['10', '10: Open']
 ];
 

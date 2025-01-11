@@ -1,5 +1,8 @@
 import React, { useState, useRef } from 'react';
 import './Card.css';
+import * as Constants from './constants';
+import { Box, IconButton, Menu, MenuItem } from '@mui/material';
+import { MoreVert } from '@mui/icons-material';
 
 interface CardProps {
   initialContent: string;
@@ -25,7 +28,6 @@ export const Card: React.FC<CardProps> = ({ initialContent, onChange, onDelete }
   };
 
   const [content, setContent] = useState<string>(initialContent);
-  const [isFocused, setIsFocused] = useState<boolean>(false);
   const [highestClozeNumber, setHighestClozeNumber] = useState<number>(getHighestClozeNumber(initialContent));
   const textareaRef = useRef<HTMLTextAreaElement>(null); // Ref to the textarea
 
@@ -35,16 +37,6 @@ export const Card: React.FC<CardProps> = ({ initialContent, onChange, onDelete }
     setContent(updatedContent);
     onChange(updatedContent); // Call the onChange prop with the updated content
   };
-
-  const handleFocus = () => setIsFocused(true);
-  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) {
-      // Prevent blur logic if focus stays within the card
-      return;
-    }
-
-    setIsFocused(false);
-  }
 
   const wrapWithCloze = (num: number) => {
     const textarea = textareaRef.current;
@@ -71,18 +63,30 @@ export const Card: React.FC<CardProps> = ({ initialContent, onChange, onDelete }
   const addNewCloze = () => {
     wrapWithCloze(highestClozeNumber + 1);
     setHighestClozeNumber(prevHighestClozeNumber => prevHighestClozeNumber + 1);
+    handleClose();
   }
 
   const addSameCloze = () => {
     wrapWithCloze(highestClozeNumber);
+    handleClose();
   }
 
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
-    <div
-      className="card"
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-    >
+    <Box sx={{
+      position: "relative",
+      minHeight: '100px',
+      maxWidth: '320px',
+      width: '100%'
+    }}>
       <textarea
         ref={textareaRef}
         value={content}
@@ -90,15 +94,37 @@ export const Card: React.FC<CardProps> = ({ initialContent, onChange, onDelete }
         className="card-input"
 
       />
-      {isFocused && (
-        <div className="button-row">
-          <button onClick={addNewCloze} className="cloze">New Cloze</button>
-          <button onClick={addSameCloze} className="cloze">Same Cloze</button>
-          <button onClick={onDelete} className="delete">
-            Delete
-          </button>
-        </div>
-      )}
-    </div>
+      <Box>
+        <IconButton
+          aria-label="more"
+          id="long-button"
+          aria-controls={open ? 'long-menu' : undefined}
+          aria-expanded={open ? 'true' : undefined}
+          aria-haspopup="true"
+          onClick={handleClick}
+          sx={{
+            position: "absolute", // Positioning the button relative to the parent container
+            top: "25%", // Adjusts vertical position
+            left: "100%", // Adjusts horizontal position (relative to the TextField)
+            transform: "translateY(-50%)", // Vertically centers the button
+          }}
+        >
+          <MoreVert />
+        </IconButton>
+        <Menu
+          id="long-menu"
+          MenuListProps={{
+            'aria-labelledby': 'long-button',
+          }}
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+        >
+          <MenuItem onClick={addNewCloze}>Add New Cloze</MenuItem>
+          <MenuItem onClick={addSameCloze}>Add Same Cloze</MenuItem>
+          <MenuItem onClick={onDelete}>Delete Card</MenuItem>
+        </Menu>
+      </Box>
+    </Box>
   );
 };
