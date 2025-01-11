@@ -4,28 +4,16 @@ import { Generator } from './Generator';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AppBar, Typography, Toolbar } from '@mui/material';
+import { Info } from "./info";
 
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary: {
-      light: '#ff847c',
-      main: '#e84a5F',
-      dark: '#a23342',
-      contrastText: '#fff',
-    },
     secondary: {
-      light: '#8fab8e',
-      main: '#749672',
-      dark: '#51694f',
+      light: '#ffd86b',
+      main: '#eda726',
+      dark: '#b36b14',
       contrastText: '#000',
-    },
-    background: {
-      default: '#1d2529', // Dark background
-      paper: '#2a363b',   // Slightly lighter for cards, modals
-    },
-    action: {
-      active: '#feceab'
     }
   },
 });
@@ -37,10 +25,14 @@ function App() {
       <div className="App">
         <header className="App-header">
           <AppBar position="static">
-            <Toolbar>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            <Toolbar sx={{
+              display: "flex",
+              justifyContent: "space-between"
+            }}>
+              <Typography variant="h6" component="div">
                 Quizbowl Anki Card Generator
               </Typography>
+              <Info />
             </Toolbar>
           </AppBar>
         </header>

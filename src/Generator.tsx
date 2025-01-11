@@ -125,7 +125,10 @@ export const Generator: React.FC = () => {
         { role: 'system', content: Constants.SYSTEM_PROMPT },
         { role: 'user', content: `The query is ${queryString} and the questions are: ${JSON.stringify(results, null, 2)}` }
       ];
-      const openaiResponse = await getOpenAIResponse(messages, apiKey);
+      if (process.env.REACT_APP_API_KEY === undefined) {
+        throw new Error("key error");
+      }
+      const openaiResponse = await getOpenAIResponse(messages, process.env.REACT_APP_API_KEY);
       const initialStrings = openaiResponse.split('\n').filter((str: string) => str.includes("{{c"));
       const initialCards = initialStrings.map(((card: string, index: number) => ({
         id: (highestID + index),
@@ -176,7 +179,7 @@ export const Generator: React.FC = () => {
 
   return (
     <Container maxWidth="md">
-      <KeyInput onSave={handleApiKeySave} />
+      {/*<KeyInput onSave={handleApiKeySave} />*/}
 
       {!generateClicked && <Box sx={{
         marginTop: '100px'
@@ -242,7 +245,7 @@ export const Generator: React.FC = () => {
           </Stack>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {Constants.CATEGORIES.map((category) => (
-              <Chip label={category} variant={selectedCategories.includes(category) ? "filled" : "outlined"} onClick={() => handleCategoryChange(category)} />
+              <Chip label={category} color="secondary" variant={selectedCategories.includes(category) ? "filled" : "outlined"} onClick={() => handleCategoryChange(category)} />
             ))}
           </Stack>
         </Stack>

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './Card.css';
 import * as Constants from './constants';
-import { Box, IconButton, Menu, MenuItem } from '@mui/material';
+import { Box, IconButton, Menu, MenuItem, TextField } from '@mui/material';
 import { MoreVert } from '@mui/icons-material';
 
 interface CardProps {
@@ -29,7 +29,7 @@ export const Card: React.FC<CardProps> = ({ initialContent, onChange, onDelete }
 
   const [content, setContent] = useState<string>(initialContent);
   const [highestClozeNumber, setHighestClozeNumber] = useState<number>(getHighestClozeNumber(initialContent));
-  const textareaRef = useRef<HTMLTextAreaElement>(null); // Ref to the textarea
+  const divRef = useRef<HTMLDivElement>(null); // Ref to the textarea
 
   // Handle content change
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -39,23 +39,18 @@ export const Card: React.FC<CardProps> = ({ initialContent, onChange, onDelete }
   };
 
   const wrapWithCloze = (num: number) => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = content.slice(start, end);
+    const selection = window.getSelection();
+    if (selection && divRef.current) {
+      const range = selection.getRangeAt(0);
 
-      if (selectedText) {
-        const clozeText = `{{c${num}::${selectedText}}}`;
-        const newContent =
-          content.slice(0, start) +
-          clozeText +
-          content.slice(end);
-        setContent(newContent);
-        onChange(newContent);
+      // Check if the selection is within the div
+      if (divRef.current.contains(range.commonAncestorContainer)) {
+        const clozeText = `{{c${num}::${selection}}}`;
+        range.deleteContents();
+        range.insertNode(document.createTextNode(clozeText));
 
-        // Update the cursor position
-        textarea.setSelectionRange(start + clozeText.length, start + clozeText.length);
+        // Update the state with the new content of the div
+        setContent(divRef.current.innerHTML);
       }
     }
   };
@@ -87,12 +82,12 @@ export const Card: React.FC<CardProps> = ({ initialContent, onChange, onDelete }
       maxWidth: '320px',
       width: '100%'
     }}>
-      <textarea
-        ref={textareaRef}
-        value={content}
-        onChange={handleChange}
-        className="card-input"
-
+      <TextField
+        ref={divRef}
+        defaultValue={content}
+        label="Multiline"
+        multiline
+        maxRows={4}
       />
       <Box>
         <IconButton
